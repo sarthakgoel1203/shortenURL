@@ -1,5 +1,55 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+
+// Icons
+const SendIcon = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <line x1="22" y1="2" x2="11" y2="13"></line>
+    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+  </svg>
+);
+
+const CopyIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="20,6 9,17 4,12" />
+  </svg>
+);
 
 function App() {
   const [originalUrl, setOriginalUrl] = useState("");
@@ -7,6 +57,7 @@ function App() {
   const [urls, setUrls] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:5000/api/urls")
@@ -39,103 +90,191 @@ function App() {
     setLoading(false);
   };
 
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(shortUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy:", error);
+    }
+  };
+
   return (
-    <div className="app-container">
-      {/* Navbar */}
-      <nav className="navbar">
-        <div className="navbar-left">ChotuURL</div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="hero">
-        <h1>Shorten Your URLs</h1>
-        <p className="subtitle">
-          Transform long, complex URLs into short, shareable links
-        </p>
-        <form className="shorten-form" onSubmit={handleSubmit}>
-          <input
-            id="url"
-            type="url"
-            value={originalUrl}
-            onChange={(e) => setOriginalUrl(e.target.value)}
-            placeholder="Enter your long URL here..."
-            required
-            className="url-input"
+    <div className="flex flex-col min-h-screen pt-20">
+      <Navbar />
+      <div className="flex justify-center mt-4 mb-8">
+        <a
+          href="https://www.producthunt.com/products/chotuurl?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-chotuurl"
+          target="_blank"
+        >
+          <img
+            src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=973153&theme=dark"
+            alt="ChotuURL - A modern, minimal, open-source, ad-free URL shortener"
+            style={{ width: "250px", height: "54px" }}
+            width="250"
+            height="54"
           />
-          <button type="submit" disabled={loading} className="shorten-btn">
-            {loading ? "Shortening..." : "Shorten"}
-          </button>
-        </form>
-        {error && <div className="error-msg">{error}</div>}
-        {shortUrl && (
-          <div className="short-url-result">
-            <span>Shortened URL: </span>
-            <a href={shortUrl} target="_blank" rel="noopener noreferrer">
-              {shortUrl}
-            </a>
+        </a>
+      </div>
+      <main className="flex-grow flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-2xl">
+          <div className="text-center mb-12">
+            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+              Shorten Your URLs
+            </h1>
+            <p className="text-xl text-white/70">
+              Transform long, complex URLs into short, shareable links
+            </p>
           </div>
-        )}
 
-        {/* URLs Table */}
-        {urls.length > 0 && (
-          <table className="urls-table">
-            <thead>
-              <tr>
-                <th>Original URL</th>
-                <th>Short URL</th>
-              </tr>
-            </thead>
-            <tbody>
-              {urls.map((url) => (
-                <tr key={url.shortId}>
-                  <td>{url.originalUrl}</td>
-                  <td>
-                    <a
-                      href={url.shortUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+          {!shortUrl ? (
+            <div className="space-y-4">
+              <form onSubmit={handleSubmit} className="relative">
+                <div className="flex items-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-1.5 shadow-lg">
+                  <input
+                    type="url"
+                    value={originalUrl}
+                    onChange={(e) => {
+                      setOriginalUrl(e.target.value);
+                      if (error) setError("");
+                    }}
+                    placeholder="Enter your long URL here..."
+                    className="flex-1 bg-transparent border-0 outline-none px-4 py-3 text-white placeholder-white/60 text-lg"
+                    disabled={loading}
+                  />
+                  <button
+                    type="submit"
+                    disabled={loading || !originalUrl.trim()}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-500 disabled:to-gray-600 text-white px-8 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed min-w-[120px] flex items-center justify-center"
+                  >
+                    {loading ? (
+                      <div className="flex items-center space-x-2">
+                        <svg
+                          className="animate-spin h-4 w-4"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        <span>Shortening...</span>
+                      </div>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        Shorten <SendIcon />
+                      </span>
+                    )}
+                  </button>
+                </div>
+              </form>
+              {error && (
+                <p className="text-red-400 text-sm text-center">{error}</p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-8 text-center">
+              <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-6">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="bg-green-500 rounded-full p-2">
+                    <CheckIcon />
+                  </div>
+                </div>
+                <p className="text-xl text-green-400 font-medium mb-6">
+                  URL shortened successfully!
+                </p>
+
+                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
+                  <p className="text-sm text-white/60 mb-3">
+                    Your shortened URL:
+                  </p>
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="text"
+                      value={shortUrl}
+                      readOnly
+                      className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-lg text-white focus:outline-none select-all"
+                    />
+                    <button
+                      onClick={copyToClipboard}
+                      className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg transition-colors duration-200 flex-shrink-0"
+                      aria-label="Copy to clipboard"
                     >
-                      {url.shortUrl}
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+                      {copied ? <CheckIcon /> : <CopyIcon />}
+                    </button>
+                  </div>
+                  {copied && (
+                    <p className="text-green-400 text-sm mt-3">
+                      ✓ Copied to clipboard!
+                    </p>
+                  )}
+                </div>
+              </div>
 
-      {/* Footer */}
-      <footer className="footer">
-        <div className="social-links">
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="GitHub"
-          >
-            <svg height="24" width="24" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.38 7.86 10.89.58.11.79-.25.79-.56v-2.02c-3.2.7-3.87-1.54-3.87-1.54-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.11-.75.41-1.27.75-1.56-2.56-.29-5.26-1.28-5.26-5.7 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .98-.31 3.2 1.18a11.1 11.1 0 0 1 2.92 0c2.22-1.49 3.2-1.18 3.2-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.43-2.7 5.41-5.27 5.7.42.36.8 1.09.8 2.2v3.26c0 .31.21.67.8.56A10.51 10.51 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z" />
-            </svg>
-          </a>
-          <a
-            href="https://linkedin.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="LinkedIn"
-          >
-            <svg height="24" width="24" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 0h-14c-2.76 0-5 2.24-5 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5v-14c0-2.76-2.24-5-5-5zm-11 19h-3v-10h3v10zm-1.5-11.25c-.97 0-1.75-.78-1.75-1.75s.78-1.75 1.75-1.75 1.75.78 1.75 1.75-.78 1.75-1.75 1.75zm13.5 11.25h-3v-5.5c0-1.32-.03-3-1.83-3-1.83 0-2.11 1.43-2.11 2.91v5.59h-3v-10h2.88v1.36h.04c.4-.75 1.38-1.54 2.84-1.54 3.04 0 3.6 2 3.6 4.59v5.59z" />
-            </svg>
-          </a>
-          <a href="mailto:contact@example.com" title="Email">
-            <svg height="24" width="24" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 13.065l-11.99-7.065v14h23.98v-14l-11.99 7.065zm11.99-9.065h-23.98l11.99 7.065 11.99-7.065z" />
-            </svg>
-          </a>
+              <button
+                onClick={() => {
+                  setOriginalUrl("");
+                  setShortUrl("");
+                  setError("");
+                  setCopied(false);
+                }}
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white py-3 px-8 rounded-xl font-medium transition-all duration-200 transform hover:scale-105"
+              >
+                Create Another Short URL
+              </button>
+            </div>
+          )}
+
+          {urls.length > 0 && (
+            <div className="mt-12">
+              <table className="w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden">
+                <thead>
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-white/70">
+                      Original URL
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-white/70">
+                      Short URL
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {urls.map((url) => (
+                    <tr key={url.shortId} className="border-t border-white/10">
+                      <td className="px-6 py-4 text-sm text-white/80">
+                        {url.originalUrl}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <a
+                          href={url.shortUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-purple-400 hover:text-purple-300 transition-colors"
+                        >
+                          {url.shortUrl}
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-        <div>© 2025 Raghav Dadhich. All rights reserved.</div>
-      </footer>
+      </main>
+      <Footer />
     </div>
   );
 }
